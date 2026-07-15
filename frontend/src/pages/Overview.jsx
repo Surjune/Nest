@@ -45,6 +45,7 @@ export default function Overview() {
     value: overview.activeCasesByTier[t] || 0,
     tier: t,
   }));
+  const totalActive = tierData.reduce((s, d) => s + d.value, 0);
 
   return (
     <>
@@ -104,6 +105,7 @@ export default function Overview() {
                 strokeWidth={2}
                 fill="#5c7a66"
                 fillOpacity={0.18}
+                isAnimationActive={false}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -111,29 +113,41 @@ export default function Overview() {
 
         <div className="card">
           <div className="caps" style={{ marginBottom: 12 }}>Active cases by tier</div>
-          <ResponsiveContainer width="100%" height={240}>
-            <PieChart>
-              <Pie
-                data={tierData}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={58}
-                outerRadius={88}
-                paddingAngle={2}
-                stroke="#faf6f0"
-                strokeWidth={2}
-                label={({ name, value }) => `${name}: ${value}`}
-                labelLine={false}
-                fontSize={12}
-              >
-                {tierData.map((d) => (
-                  <Cell key={d.tier} fill={TIER_HEX[d.tier]} />
-                ))}
-              </Pie>
-              <Legend iconType="circle" iconSize={9} wrapperStyle={{ fontSize: 12.5 }} />
-              <Tooltip contentStyle={tooltipStyle} />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="donut-wrap">
+            <ResponsiveContainer width="100%" height={240}>
+              <PieChart>
+                <Pie
+                  data={tierData}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={62}
+                  outerRadius={92}
+                  paddingAngle={2}
+                  stroke="#faf6f0"
+                  strokeWidth={2}
+                  isAnimationActive={false}
+                >
+                  {tierData.map((d) => (
+                    <Cell key={d.tier} fill={TIER_HEX[d.tier]} />
+                  ))}
+                </Pie>
+                <Legend
+                  iconType="circle"
+                  iconSize={9}
+                  wrapperStyle={{ fontSize: 12.5 }}
+                  formatter={(name) => {
+                    const d = tierData.find((t) => t.name === name);
+                    return `${name} · ${d ? d.value : 0}`;
+                  }}
+                />
+                <Tooltip contentStyle={tooltipStyle} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="donut-center">
+              <div className="donut-total">{totalActive}</div>
+              <div className="donut-caption">active</div>
+            </div>
+          </div>
         </div>
       </div>
 

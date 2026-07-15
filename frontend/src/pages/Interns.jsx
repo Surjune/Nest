@@ -78,13 +78,15 @@ export default function Interns() {
                     <span className="status-pill">{Math.max(0, CERT_HOURS - i.sessionHours)}h to go</span>
                   )}
                 </td>
-                <td style={{ display: 'flex', gap: 6 }}>
-                  <button className="btn sm ghost" onClick={() => logHours(i)}>Log hours</button>
-                  {!i.certificateIssued && (
-                    <button className="btn sm" onClick={() => issueCertificate(i)} disabled={i.sessionHours < CERT_HOURS}>
-                      Issue certificate
-                    </button>
-                  )}
+                <td>
+                  <div className="row-actions">
+                    <button className="btn sm ghost" onClick={() => logHours(i)}>Log hours</button>
+                    {!i.certificateIssued && (
+                      <button className="btn sm" onClick={() => issueCertificate(i)} disabled={i.sessionHours < CERT_HOURS}>
+                        Issue certificate
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
