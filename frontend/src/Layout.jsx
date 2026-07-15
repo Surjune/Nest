@@ -22,12 +22,14 @@ export default function Layout() {
       <aside className="sidebar">
         <div className="wordmark">nest</div>
         <div className="tagline">admin — a safe place to land</div>
-        {NAV.map((n) => (
-          <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => (isActive ? 'active' : '')}>
-            <span aria-hidden="true">{n.icon}</span>
-            {n.label}
-          </NavLink>
-        ))}
+        <nav className="nav">
+          {NAV.map((n) => (
+            <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => (isActive ? 'active' : '')}>
+              <span className="icon" aria-hidden="true">{n.icon}</span>
+              <span className="label">{n.label}</span>
+            </NavLink>
+          ))}
+        </nav>
         <div className="foot">
           <span className="whoami">Signed in as {getAdminName()}</span>
           <button onClick={logout}>Sign out</button>
