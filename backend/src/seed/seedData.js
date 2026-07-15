@@ -131,6 +131,7 @@ export async function seedDatabase({ log = console.log } = {}) {
   // Give older cases some history: assign, complete sessions, escalate a couple.
   const sessions = [];
   const historyLogs = [];
+  const activeCaseCounts = new Map(); // assignee id -> open-case count
   for (const c of created) {
     const ageDays = (Date.now() - c.assessedAt) / (24 * 3600 * 1000);
     if (ageDays < 3 || rng() < 0.3) continue; // recent ones stay 'new'
@@ -145,11 +146,13 @@ export async function seedDatabase({ log = console.log } = {}) {
       c.assignedIntern = intern._id;
       const done = rng() < 0.6;
       c.status = done ? 'in-session' : 'assigned';
+      activeCaseCounts.set(String(intern._id), (activeCaseCounts.get(String(intern._id)) || 0) + 1);
       sessions.push({ case: c._id, intern: intern._id, scheduledAt: new Date(c.assessedAt.getTime() + 2 * 24 * 3600 * 1000), outcome: done ? 'completed' : 'scheduled' });
       historyLogs.push({ action: 'assigned', case: c._id, studentCode: c.studentCode, detail: `Case ${c.studentCode} (Tier 2) assigned to intern ${intern.name}.`, actor: 'admin@thenest.social', createdAt: new Date(c.assessedAt.getTime() + 1 * 24 * 3600 * 1000) });
       if (!done && rng() < 0.25) {
         c.tier = 3;
         c.status = 'escalated';
+        activeCaseCounts.set(String(c.assignedIntern), activeCaseCounts.get(String(c.assignedIntern)) - 1);
         c.assignedIntern = null;
         historyLogs.push({ action: 'escalated', case: c._id, studentCode: c.studentCode, detail: `Case ${c.studentCode} escalated Tier 2 → Tier 3. Reason: intern flagged worsening symptoms during session.`, actor: 'admin@thenest.social', createdAt: new Date(c.assessedAt.getTime() + 4 * 24 * 3600 * 1000) });
       }
@@ -158,6 +161,7 @@ export async function seedDatabase({ log = console.log } = {}) {
       c.assignedProfessional = pro._id;
       const done = rng() < 0.5;
       c.status = done ? 'in-session' : 'assigned';
+      activeCaseCounts.set(String(pro._id), (activeCaseCounts.get(String(pro._id)) || 0) + 1);
       sessions.push({ case: c._id, professional: pro._id, scheduledAt: new Date(c.assessedAt.getTime() + 1 * 24 * 3600 * 1000), outcome: done ? 'completed' : 'scheduled' });
       historyLogs.push({ action: 'assigned', case: c._id, studentCode: c.studentCode, detail: `Case ${c.studentCode} (Tier 3) assigned to professional ${pro.name}.`, actor: 'admin@thenest.social', createdAt: new Date(c.assessedAt.getTime() + 12 * 3600 * 1000) });
     }
@@ -165,6 +169,13 @@ export async function seedDatabase({ log = console.log } = {}) {
   }
   await Session.insertMany(sessions);
   await AuditLog.insertMany(historyLogs);
+
+  for (const [id, count] of activeCaseCounts) {
+    if (count > 0) {
+      await Intern.updateOne({ _id: id }, { activeCases: count });
+      await Professional.updateOne({ _id: id }, { activeCases: count });
+    }
+  }
 
   // Certificate history for the top intern.
   await AuditLog.create({
