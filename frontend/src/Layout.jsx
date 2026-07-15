@@ -29,8 +29,7 @@ export default function Layout() {
           </NavLink>
         ))}
         <div className="foot">
-          Signed in as {getAdminName()}
-          <br />
+          <span className="whoami">Signed in as {getAdminName()}</span>
           <button onClick={logout}>Sign out</button>
         </div>
       </aside>
